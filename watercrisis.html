@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Water Crisis</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+.navbar {
+      position: absolute;
+      top: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 50px;
+      box-sizing: border-box;
+      z-index: 2;
+    }
+
+    .logo {
+      color: white;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    .nav-links a {
+      color: white;
+      margin-left: 20px;
+      text-decoration: none;
+      font-weight: 400;
+      opacity: 0.9;
+    }
+
+    .nav-links a:hover {
+      opacity: 1;
+    }
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  color: white;
+  overflow-x: hidden;
+
+  /* base water tone (will shift greener over time via JS) */
+  background: linear-gradient(180deg,
+    #0a1f2e,
+    #123b54,
+    #1f6f8b,
+    #00567a
+  );
+
+  transition: background 0.6s ease;
+}
+
+/* pollution + diffusion overlay */
+body::before {
+  content: "";
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.06), transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.05), transparent 60%);
+  animation: bgMove 18s ease-in-out infinite;
+  z-index: 0;
+}
+
+/* GREEN POLLUTION LAYER (increases over time) */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 60, 20, 0);
+  z-index: 0;
+  pointer-events: none;
+  transition: background 0.6s ease;
+}
+
+@keyframes bgMove {
+  0%,100% { transform: translate(0,0); }
+  50% { transform: translate(-5%, -5%); }
+}
+
+/* layout */
+.section {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 50px 20px;
+  text-align: center;
+  z-index: 1;
+  position: relative;
+
+  opacity: 0;
+  transform: translateY(40px);
+  transition: 0.8s ease;
+}
+
+.section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero {
+  min-height: 100vh;
+  justify-content: center;
+}
+
+h1 { font-size: 3.2rem; max-width: 800px; }
+h2 { font-size: 2.2rem; }
+
+p {
+  max-width: 800px;
+  line-height: 1.8;
+  color: #dbeafe;
+}
+
+.image {
+  width: 27%;
+  max-width: 255px;
+  border-radius: 5px;
+  margin-top: 8px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+}
+
+/* SIMULATION */
+.sim-wrapper {
+  height: 180vh;
+}
+
+.sim-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.sim-box {
+  width: 260px;
+  height: 320px;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* WATER (NOW DEGRADES TO MURKY GREEN) */
+.water {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 80%;
+  border-radius: 0 0 20px 20px;
+
+  background: linear-gradient(180deg, #7dd3fc, #0284c7);
+  transition: height 0.15s linear, filter 0.3s ease, background 0.5s ease;
+
+  filter: saturate(1.2);
+}
+
+/* wave diffusion (pollution spread feel) */
+.water::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  width: 200%;
+  height: 30px;
+
+  background: rgba(255,255,255,0.25);
+  border-radius: 50%;
+
+  animation: wave 4s linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes wave {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.step-text {
+  margin-top: 20px;
+  color: #bae6fd;
+}
+
+.stat-box {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 24px;
+  padding: 40px 50px;
+  text-align: center;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  transform: scale(1);
+  transition: transform 0.3s ease;
+}
+
+.stat-box:hover {
+  transform: scale(1.03);
+}
+
+.stat {
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+  gap: 20px;
+  width: 90%;
+  max-width: 900px;
+  margin-top: 30px;
+}
+
+.card {
+  background: rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 25px;
+  backdrop-filter: blur(10px);
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+}
+
+.card-number {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* QUIZ (UNCHANGED STYLE) */
+.quiz {
+  max-width: 500px;
+  width: 90%;
+}
+
+.option {
+  padding: 14px;
+  margin: 10px 0;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.08);
+  cursor: pointer;
+}
+
+.option:hover {
+  background: rgba(255,255,255,0.18);
+}
+
+.option.correct { background: #22c55e; }
+.option.wrong { background: #ef4444; }
+
+</style>
+</head>
+
+<body>
+
+  <div class="navbar">
+    <div class="logo">WaterForTomorrow</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="watercrisis.html">Water Crisis</a>
+      <a href="takeaction.html">Take Action</a>
+      <a href="about.html">About</a>
+    </div>
+  </div>
+
+<!-- HERO -->
+<div class="section hero visible">
+  <h1>Water is disappearing faster than we think.</h1>
+  <p>
+    What feels infinite is actually fragile. Every day, billions rely on a resource that is quietly running out.
+  </p>
+</div>
+
+<!-- BUILD-UP TEXT -->
+<div class="section">
+  <h2>This isn’t a future problem.</h2>
+  <p>
+    Rivers are drying. Groundwater is being depleted faster than it can recover.
+    Climate change is shifting rainfall patterns, making water unpredictable.
+  </p>
+</div>
+
+<!-- SIMULATION -->
+<div class="sim-wrapper">
+  <div class="sim-sticky">
+
+    <h2>Watch it happen</h2>
+    <p>Scroll to see how availability changes</p>
+
+    <div class="sim-box">
+      <div class="water" id="water"></div>
+    </div>
+
+    <div class="step-text" id="stepText">Stable</div>
+
+  </div>
+</div>
+
+<!-- IMPACT -->
+<div class="section">
+  <h2>Now imagine this at global scale.</h2>
+  <p>
+    As water disappears, agriculture collapses, food prices rise,
+    and entire communities are pushed into crisis.
+  </p>
+  <div style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center;">
+  <img src="images/agriculture-collapse.png" class="image">
+  <img src="images/food-prices.png" class="image">
+  <img src="images/queue-water.png" class="image">
+</div>
+</div>
+
+<!-- BIG STAT -->
+<div class="section">
+<div class="stat-box">
+  <div class="stat" id="stat1">0</div>
+  <p>people lack safe drinking water</p>
+  </div>
+</div>
+
+<!-- DATA CARDS -->
+<div class="section">
+  <h2>The scale is massive</h2>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-number">2.2B</div>
+      <p>No safe drinking water</p>
+    </div>
+
+    <div class="card">
+      <div class="card-number">4B</div>
+      <p>Face scarcity yearly</p>
+    </div>
+
+    <div class="card">
+      <div class="card-number">80%</div>
+      <p>Wastewater untreated</p>
+    </div>
+
+    <div class="card">
+      <div class="card-number">700M</div>
+      <p>Risk displacement by 2030</p>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ (UNCHANGED) -->
+<div class="section">
+  <h2>Quick Check</h2>
+
+  <div class="quiz">
+    <p>How many people lack access to safe drinking water?</p>
+
+    <div class="option" onclick="answer(this,true)">2.2 Billion</div>
+    <div class="option" onclick="answer(this,false)">200 Million</div>
+    <div class="option" onclick="answer(this,false)">50 Million</div>
+
+    <p id="feedback"></p>
+  </div>
+</div>
+
+<script>
+const water = document.getElementById('water');
+const stepText = document.getElementById('stepText');
+const stat1 = document.getElementById('stat1');
+
+const steps = ["Stable","Stress","Scarcity","Crisis","Collapse"];
+
+let statTriggered = false;
+
+function animateCounter(el, target) {
+  if (el.started) return;
+  el.started = true;
+
+  let count = 0;
+  let step = target / 100;
+
+  let interval = setInterval(() => {
+    count += step;
+    if (count >= target) {
+      el.textContent = "2,200,000,000";
+      clearInterval(interval);
+    } else {
+      el.textContent = Math.floor(count).toLocaleString();
+    }
+  }, 20);
+}
+
+window.addEventListener('scroll', () => {
+
+  document.querySelectorAll('.section').forEach(sec => {
+    if (sec.getBoundingClientRect().top < window.innerHeight - 80) {
+      sec.classList.add('visible');
+    }
+  });
+
+  const sim = document.querySelector('.sim-wrapper');
+  const rect = sim.getBoundingClientRect();
+
+  let progress = Math.min(Math.max(-rect.top / (rect.height - window.innerHeight), 0), 1);
+
+  let level = 80 - (progress * 75);
+  water.style.height = level + "%";
+
+  /* GRADUAL POLLUTION SHIFT (BLUE → GREEN → DARK MURKY) */
+  let greenShift = Math.min(progress * 180, 180);
+  let darkness = progress * 0.6;
+
+  water.style.background = `linear-gradient(180deg,
+    rgb(${125 - progress*60}, ${211 - progress*80 + greenShift}, ${252 - progress*120}),
+    rgb(${2 + greenShift*0.2}, ${132 - progress*40}, ${199 - progress*60})
+  )`;
+
+  water.style.filter = `
+    saturate(${1.2 - progress*0.8})
+    brightness(${1 - darkness})
+  `;
+
+  /* POLLUTION OVERLAY DARKENS WORLD */
+  document.body.style.setProperty('--pollution', progress);
+  document.body.style.background = `linear-gradient(180deg,
+    rgb(${10 - progress*10}, ${31 - progress*20 + greenShift*0.3}, ${46 - progress*20}),
+    rgb(${18 - progress*20}, ${59 - progress*30 + greenShift*0.3}, ${84 - progress*30}),
+    rgb(${31 - progress*30}, ${111 - progress*40 + greenShift*0.3}, ${139 - progress*40}),
+    rgb(${5 + greenShift*0.2}, ${120 - progress*60}, ${140 - progress*80})
+  )`;
+
+  let stepIndex = Math.min(Math.floor(progress * steps.length), steps.length - 1);
+  stepText.textContent = steps[stepIndex];
+
+  if (!statTriggered && stat1.getBoundingClientRect().top < window.innerHeight) {
+    animateCounter(stat1, 2200000000);
+    statTriggered = true;
+  }
+});
+
+function answer(el, correct) {
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('correct','wrong'));
+  el.classList.add(correct ? 'correct' : 'wrong');
+
+  document.getElementById('feedback').textContent =
+    correct ? "Correct. Billions are affected." : "Too low. The number is much higher.";
+}
+</script>
+
+</body>
+</html>
